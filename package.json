@@ -1,0 +1,23 @@
+{
+  "name": "reflink",
+  "description": "AJAX navigation for anchors and forms",
+  "version": "0.0.1",
+  "readme": "Readme.md",
+  "scripts": {
+    "test": "mocha --compilers js:babel-core/register --recursive tests"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "babel-core": "^6.2.1",
+    "babel-preset-es2015": "^6.1.18",
+    "babelify": "^7.2.0",
+    "browserify": "^12.0.1",
+    "chai": "^3.4.1",
+    "mocha": "^2.3.4"
+  },
+  "babel": {
+    "presets": [
+      "es2015"
+    ]
+  }
+}
