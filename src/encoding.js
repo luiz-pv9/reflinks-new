@@ -20,7 +20,11 @@ export function encodeQueryStringToFlatJson(query) {
         let key = vals[0];
         let value = vals[1];
         if(obj[key]) {
-            obj[key] = [obj[key]];
+            // The previous value could already be an array, in which case we
+            // just skip it.
+            if('[object Array]' != Object.prototype.toString.call(obj[key])) {
+                obj[key] = [obj[key]];
+            }
             obj[key].push(value);
         } else {
             obj[key] = value;
@@ -57,7 +61,11 @@ export function encodeQueryStringToNestedJson(query) {
             }
         });
         if(objRef[key]) {
-            objRef[key] = [objRef[key]];
+            // The previous value could already be an array, in which case we
+            // just skip it.
+            if('[object Array]' != Object.prototype.toString.call(objRef[key])) {
+                objRef[key] = [objRef[key]];
+            }
             objRef[key].push(value);
         } else {
             objRef[key] = value;

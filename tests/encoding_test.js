@@ -42,6 +42,13 @@ describe('encoding specs', () => {
                 'age': '10'
             });
         });
+
+        it('encodes array with three or more elements', () => {
+            let obj = lib.encodeQueryStringToFlatJson('color=red&color=blue&color=green');
+            obj.should.eql({
+                'color': ['red', 'blue', 'green']
+            });
+        });
     });
 
     describe('.encodeQueryStringToNestedJson', () => {
@@ -95,6 +102,13 @@ describe('encoding specs', () => {
                         name: 'Luiz'
                     }
                 }
+            });
+        });
+
+        it('encodes multiple values with three or more itens', () => {
+            let obj = lib.encodeQueryStringToNestedJson('a[b]=10&a[b]=20&a[b]=30');
+            obj.should.eql({
+                a: { b: ['10', '20', '30'] }
             });
         });
     });
