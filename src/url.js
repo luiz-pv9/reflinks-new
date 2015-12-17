@@ -27,12 +27,12 @@ export default class Url {
     ** the Url class. All values are copied from the other url.
     */
     copyFromUrl(url) {
-        this.domain = url.domain;
-        this.path = url.path;
-        this.port = url.port;
         this.protocol = url.protocol;
-        this.query = url.query;
-        this.hash = url.hash;
+        this.domain   = url.domain;
+        this.query    = url.query;
+        this.path     = url.path;
+        this.port     = url.port;
+        this.hash     = url.hash;
     }
 
     /*
@@ -40,12 +40,12 @@ export default class Url {
     ** document.location. All values are copied from the specified location.
     */
     copyFromLocation(location) {
-        this.domain = location.host;
-        this.path = location.pathname;
         this.protocol = location.protocol.replace(':', '');
-        this.port = location.protocol.port;
-        this.query = location.search;
-        this.hash = location.hash;
+        this.domain   = location.host;
+        this.query    = location.search;
+        this.path     = location.pathname;
+        this.port     = location.protocol.port;
+        this.hash     = location.hash;
     }
 
     /*

@@ -3,9 +3,9 @@
 ** specified objects are not modified. If both objects have the same key, the
 ** value from the first object will override the second.
 */
-export function mergeObjects(first, second) {
+export function mergeObjects(first, secnd) {
     let merged = {};
-    for(var attr in second) { merged[attr] = second[attr]; }
+    for(var attr in secnd) { merged[attr] = secnd[attr]; }
     for(var attr in first) { merged[attr] = first[attr]; }
     return merged;
 }

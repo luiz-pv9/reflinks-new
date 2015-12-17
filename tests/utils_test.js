@@ -34,5 +34,19 @@ describe('utils specs', () => {
             });
             merged.a.should.eq(first.a); // same reference
         });
+
+        it('ignores if the first value isnt an object', () => {
+            let merged = utils.mergeObjects(null, {a: 10});
+            merged.should.eql({
+                a: 10
+            });
+        });
+
+        it('ignores if the second value isnt an object', () => {
+            let merged = utils.mergeObjects({a: 15}, null);
+            merged.should.eql({
+                a: 15
+            });
+        });
     });
 });

@@ -3,7 +3,8 @@ import CSRF from './csrf';
 import * as utils from './utils';
 
 /*
-** 
+** The 'send' function in the Request accept some options. This constant is the
+** default values if the user doesn't specify options.
 */
 const defaultSendOptions = {
     headers: {},
