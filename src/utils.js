@@ -9,3 +9,12 @@ export function mergeObjects(first, secnd) {
     for(var attr in first) { merged[attr] = first[attr]; }
     return merged;
 }
+
+/*
+** Creates a new in-memory DOM elements from the specified html.
+*/
+export function stringToElements(html) {
+    let div = document.createElement('div');
+    div.innerHTML = html;
+    return div.childNodes;
+}

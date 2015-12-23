@@ -97,7 +97,7 @@ describe('url specs', () => {
         });
     });
 
-    describe('queryObject', () => {
+    describe('.queryObject', () => {
         it('returns a map from a single query', () => {
             let dixte = new Url('/posts?search=cat');
             dixte.queryObject().should.eql({'search': 'cat'});
@@ -156,6 +156,37 @@ describe('url specs', () => {
                     'color': ['red', 'blue']
                 }
             });
+        });
+    });
+
+    describe('.setQueryObject', () => {
+        it('overrides the previous query with the specified one', () => {
+            let url = new Url('reflinks.com?param=one');
+            url.setQueryObject({param: 'two'});
+            url.query.should.eql("?param=two");
+        });
+
+        it('encodes nested properties', () => {
+            let url = new Url('reflinks.com');
+            url.setQueryObject({post: {author: {name: 'Luiz'}}});
+            url.query.should.eql('?post[author][name]=Luiz');
+        });
+    });
+
+    describe('.toString', () => {
+        it('returns the url with with the curren protocol if none is specified', () => {
+            let url = new Url('www.reflinks.com/path');
+            url.toString().should.eql("http://www.reflinks.com/path");
+        });
+
+        it('returns the url with hash content', () => {
+            let url = new Url('www.reflinks.com/path#target')
+            url.toString().should.eql("http://www.reflinks.com/path#target");
+        });
+
+        it('returns the current domain if none is specified',() => {
+            let url = new Url('/users/10?foo=bar');
+            url.toString().should.eql('http://localhost:9876/users/10?foo=bar');
         });
     });
 });

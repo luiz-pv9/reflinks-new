@@ -49,4 +49,33 @@ describe('utils specs', () => {
             });
         });
     });
+
+    describe('#stringToElements', () => {
+        it('creates a span class with no attributes', () => {
+            let span = utils.stringToElements('<span></span>');
+            span.length.should.eq(1);
+            span[0].tagName.should.eql("SPAN");
+        });
+
+        it('creates a span with class and id', () => {
+            let span = utils.stringToElements('<span class="test" id="foo"></span>');
+            span.length.should.eq(1);
+            span[0].tagName.should.eql("SPAN");
+            span[0].className.should.eql("test");
+            span[0].id.should.eql("foo");
+        });
+
+        it('creates multiple elements in the in the NodeList', () => {
+            let multiple = utils.stringToElements('<h1>Teste</h1><p>More test</p>');
+            multiple.length.should.eq(2);
+            multiple[0].tagName.should.eql("H1");
+            multiple[1].tagName.should.eql("P");
+        });
+
+        it('applies whatever correction the browser supports', () => {
+            let invalid = utils.stringToElements('<h1>Test</h2>');
+            invalid.length.should.eq(1);
+            invalid[0].tagName.should.eq("H1");
+        });
+    });
 });

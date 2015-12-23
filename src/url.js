@@ -1,4 +1,4 @@
-import {encodeQueryStringToFlatJson, encodeQueryStringToNestedJson} from './encoding';
+import * as encoding from './encoding';
 
 export default class Url {
 
@@ -62,13 +62,26 @@ export default class Url {
             this.hash = matches[5];
             this.port = '';
             if(this.domain.indexOf(':') !== -1) {
-                let index = this.domain.indexOf(':');
-                this.port = this.domain.substring(index+1, this.domain.length);
-                this.domain = this.domain.substring(0, index);
+                let parts = this.domain.split(':');
+                this.domain = parts[0];
+                this.port = parts[1];
             }
         } else {
             console.error('invalid url: ' + url);
         }
+    }
+
+    /*
+    ** Returns this url as a string. This method fills the void with the current
+    ** page location data if the user doesn't specify one. This prevents
+    ** duplicating the same key for caches.
+    */
+    toString() {
+        let urlStr = '';
+        urlStr += this.protocol ? this.protocol + '://' : document.location.protocol + '//';
+        urlStr += this.domain ? this.domain : document.location.host;
+        urlStr += this.port ? ':' + this.port : '';
+        return urlStr + this.path + this.query + this.hash;
     }
 
     /*
@@ -82,7 +95,17 @@ export default class Url {
     ** if the specified nested argument is true or false.
     */
     queryObject(nested) {
-        return nested ? encodeQueryStringToNestedJson(this.query) : 
-                        encodeQueryStringToFlatJson(this.query);
+        return nested ? encoding.encodeQueryStringToNestedJson(this.query) : 
+                        encoding.encodeQueryStringToFlatJson(this.query);
+    }
+
+    /*
+    ** Overrides the query part of the url with the specified object. The object
+    ** must be 'encodable' to queryString, so pretty much a JSON without
+    ** circular reference. `this` is returned.
+    */
+    setQueryObject(params) {
+        this.query = '?' + encoding.encodeJsonToQueryString(params);
+        return this;
     }
 }
