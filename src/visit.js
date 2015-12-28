@@ -94,6 +94,10 @@ export function initialize() {
     if(docRoot && !docRoot.hasAttribute(ACTIVE_ATTR)) {
         docRoot.setAttribute(ACTIVE_ATTR, '');
     }
+    if(docRoot && docRoot.hasAttribute('data-cached')) {
+        let url = new Url(document.location).withoutHash();
+        cacheElement(url.toString(), docRoot);
+    }
 }
 
 /*
@@ -121,18 +125,17 @@ function pushState(url, element, options) {
     // Ok, I think I got this. We need to crawl from the current document root
     // until we find the specified element counting each data-view we found.
 
-    // Only if cached this should execute from here on...
-    if(!options.cache) {
-        return;
+    if(options.cache) {
+        cacheElement(url, element);
     }
+}
 
+function cacheElement(url, element) {
     let docRoot = getDocumentRoot();
     let elements = [];
     if(docRoot === element) {
         elements.push(element);
-
         // TODO: crawl the element for possible data-views.
-
     } else {
         // If it's a target it means the previous document root is still the
         // same.
