@@ -13,7 +13,7 @@ export default class Url {
     constructor(url) {
         if(url instanceof Url) {
             this.copyFromUrl(url);
-        } else if(url && url.path && url.pathname) {
+        } else if(url && url.host && url.pathname) {
             this.copyFromLocation(url);
         } else if('string' === typeof url) {
             this.initializeFromString(url);
@@ -44,8 +44,11 @@ export default class Url {
         this.domain   = location.host;
         this.query    = location.search;
         this.path     = location.pathname;
-        this.port     = location.protocol.port;
+        this.port     = location.port;
         this.hash     = location.hash;
+        if(this.domain.indexOf(':') !== -1) {
+            this.domain = this.domain.split(':')[0];
+        }
     }
 
     /*
@@ -81,7 +84,18 @@ export default class Url {
         urlStr += this.protocol ? this.protocol + '://' : document.location.protocol + '//';
         urlStr += this.domain ? this.domain : document.location.host;
         urlStr += this.port ? ':' + this.port : '';
-        return urlStr + this.path + this.query + this.hash;
+        return urlStr + (this.path || '/') + this.query + this.hash;
+    }
+
+    /*
+    ** Instantiates a new url with the same properties as this but without the
+    ** hash part. This is useful for storing reference to cache because the
+    ** hash doesn't change the url id.
+    */
+    withoutHash() {
+        let hashless = new Url(this);
+        hashless.hash = '';
+        return hashless;
     }
 
     /*

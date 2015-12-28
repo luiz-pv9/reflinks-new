@@ -75,7 +75,17 @@ export function encodeQueryStringToNestedJson(query) {
 }
 
 /*
+** Encodes the specified JSON object to query string. This function is used by
+** the Url when encoding the query part of the url and for serializing forms
+** back to www-form-urlencoded to send in a post request. Here are a few
+** examples:
 **
+** ```javascript
+** encodeJsonToQueryString({ 'foo': 'bar' }) // => 'foo=bar'
+** encodeJsonToQueryString({ 'test': [1, 2] }) // => 'test[0]=1&test[1]=2'
+** encodeJsonToQueryString({ 'author': { 'name': 'Luiz', 'age': '22' } }) // => 'author[name]=Luiz&author[age]=22'
+** encodeJsonToQueryString({ 'colors': { 'cold': ['blue', 'white'] } }) // => 'colors[cold][0]=blue&colors[cold][1]=white'
+** ```
 */
 export function encodeJsonToQueryString(data) {
     let qs = '';

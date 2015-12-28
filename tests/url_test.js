@@ -184,9 +184,21 @@ describe('url specs', () => {
             url.toString().should.eql("http://www.reflinks.com/path#target");
         });
 
-        it('returns the current domain if none is specified',() => {
+        it('returns the current domain if none is specified', () => {
             let url = new Url('/users/10?foo=bar');
             url.toString().should.eql('http://localhost:9876/users/10?foo=bar');
+        });
+
+        it('uses / as the path if none is specified', () => {
+            let url = new Url('reflinks.com');
+            url.toString().should.eql('http://reflinks.com/');
+        });
+    });
+
+    describe('.withoutHash', () => {
+        it('returns the url without the hash part', () => {
+            let url = new Url('www.reflinks.com/path#target')
+            url.withoutHash().toString().should.eql("http://www.reflinks.com/path");
         });
     });
 });
