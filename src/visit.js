@@ -1,150 +1,7 @@
 import {Request} from './request';
-import Url from './url';
+import * as navigation from './navigation';
 import * as utils from './utils';
-
-/*
-** Constants
-*/
-const ACTIVE_ATTR = 'data-active';
-const CACHED_ATTR = 'data-cached';
-const ROOT_ATTR   = 'data-reflinks-root';
-
-/*
-** Stores all history changes objects to rollback or advance through navigation.
-** This hash maps from a url to a list of elements that represents the url view.
-** This map is used in the onPopState function to find whether we need to send
-** a new request or just hide/show some elements.
-*/
-let navigationHistory = {};
-
-/*
-** Returns the navigationHistory. Only used in tests.
-*/
-export function getNavigationHistory() { return navigationHistory; }
-
-/*
-** Clear the conents of navigationHistory to an empty object.
-*/
-export function clearNavigationHistory() {
-    Object.keys(navigationHistory).forEach((url) => {
-        delete navigationHistory[url];
-    });
-}
-
-/*
-** 
-*/
-export function cacheCurrent() {
-    let docRoot = getDocumentRoot();
-    if(docRoot) {
-        docRoot.setAttribute('data-cached', new Date().getTime().toString());
-    }
-}
-
-/*
-** Reference to the element that is currently being displayed as root.
-*/
-let documentRoot = null;
-
-// Used to detect initial (useless) popstate.
-// If history.state exists, assume browser isn't going to fire initial popstate.
-let popped = ('state' in window.history), initialURL = location.href;
-
-/*
-** Callback called when the user press back or forward in the browser.
-*/
-function onPopState(e) {
-    // Ignore inital popstate that some browsers fire on page load
-    let initialPop = !popped && location.href == initialURL;
-    popped = true;
-    if(initialPop) return;
-
-
-    let url = new Url(e.target.location);
-    let navigation = navigationHistory[url.toString()];
-    if(navigation) {
-        // We can restore the page to the state the user is requesting!
-    } else {
-        // We need to send a new request... :(
-        page(url);
-    }
-};
-
-window.addEventListener('popstate', onPopState);
-
-/*
-** This function should be called in the boot process of Reflinks. It tries to
-** find an element in the page that has the data-reflinks-root attribute.
-*/
-export function findDocumentRoot() {
-    let docRoot = document.querySelector('*['+ROOT_ATTR+']');
-    if(!docRoot) {
-        console.error("[reflinks] could not find the document root element");
-    }
-    documentRoot = docRoot;
-    return docRoot;
-}
-
-/*
-** Adds the property data-active to the first document-root specified by the
-** user when the page loads. This function should only be called once.
-*/
-export function initialize() {
-    let docRoot = findDocumentRoot();
-    if(docRoot && !docRoot.hasAttribute(ACTIVE_ATTR)) {
-        docRoot.setAttribute(ACTIVE_ATTR, '');
-    }
-    if(docRoot && docRoot.hasAttribute('data-cached')) {
-        let url = new Url(document.location).withoutHash();
-        cacheElement(url.toString(), docRoot);
-    }
-}
-
-/*
-** Returns the documentRoot of the current page.
-*/
-export function getDocumentRoot() {
-    let docRoot = document.querySelector('*['+ROOT_ATTR+']['+ACTIVE_ATTR+']');
-    return docRoot;
-}
-
-
-/*
-** Pushes a new state to the history and updates the navigation map with the
-** specified element (root and possible targets).
-*/
-function pushState(url, element, options) {
-    // Push a new state to the history
-    window.history.pushState({reflinks: true}, "", url);
-
-    // The element might a document-root or a target. If it's a document root
-    // we need to crawl inside to find if any target is present. If it's a
-    // target, the current document root + targets will be copied to the
-    // navigation map.
-
-    // Ok, I think I got this. We need to crawl from the current document root
-    // until we find the specified element counting each data-view we found.
-
-    if(options.cache) {
-        cacheElement(url, element);
-    }
-}
-
-function cacheElement(url, element) {
-    let docRoot = getDocumentRoot();
-    let elements = [];
-    if(docRoot === element) {
-        elements.push(element);
-        // TODO: crawl the element for possible data-views.
-    } else {
-        // If it's a target it means the previous document root is still the
-        // same.
-        elements.push(docRoot);
-
-        // I need to check the current document for hints... what hints?
-    }
-    navigationHistory[url] = elements;
-}
+import Url from './url';
 
 /*
 ** The default options for the onSuccess callback.
@@ -184,8 +41,8 @@ function onSuccess(root, attribute, value, options) {
         let nodes = root.querySelectorAll(selector);
         for(let i = 0, len = nodes.length; i < len; i++) {
             let node = nodes[i];
-            if(node.hasAttribute(CACHED_ATTR)) {
-                node.removeAttribute(ACTIVE_ATTR);
+            if(node.hasAttribute(navigation.CACHED_ATTR)) {
+                node.removeAttribute(navigation.ACTIVE_ATTR);
                 hideElement(node);
             } else {
                 root.removeChild(node);
@@ -194,11 +51,11 @@ function onSuccess(root, attribute, value, options) {
 
         // Insert the new target.
         // Change later: insert before the first node found from the selector.
-        element.setAttribute(ACTIVE_ATTR, '');
+        element.setAttribute(navigation.ACTIVE_ATTR, '');
         root.appendChild(element);
 
         // Add the element to the navigationHistory map.
-        pushState(xhr.url, element, options);
+        navigation.pushState(xhr.url, element, options);
     }
 }
 
@@ -222,12 +79,12 @@ export function page(url, options) {
         url = new Url(url).withoutHash();
     }
     url = url.toString();
-    if(!getDocumentRoot()) {
+    if(!navigation.getDocumentRoot()) {
         return console.error("[reflinks] couldn't find document root in the page.");
     }
     Request.GET(url, {
         redirect: onRedirect,
-        success:  onSuccess(documentRoot.parentNode, ROOT_ATTR, undefined, options),
+        success:  onSuccess(navigation.getDocumentRoot().parentNode, navigation.ROOT_ATTR, undefined, options),
         error:    onError,
     });
 }
@@ -247,7 +104,34 @@ export function target(url, elm, viewName) {
     }
     Request.GET(url, {
         redirect: onRedirect,
-        success:  onSuccess(documentRoot.parentNode, 'data-view', viewName),
+        success:  onSuccess(navigation.getDocumentRoot().parentNode, 'data-view', viewName),
         error:    onError,
     });
 }
+
+
+// Used to detect initial (useless) popstate.
+// If navigation.state exists, assume browser isn't going to fire initial popstate.
+let popped = ('state' in window.history), initialURL = location.href;
+
+/*
+** Callback called when the user press back or forward in the browser.
+*/
+function onPopState(e) {
+    // Ignore inital popstate that some browsers fire on page load
+    let initialPop = !popped && location.href == initialURL;
+    popped = true;
+    if(initialPop) return;
+
+
+    let url = new Url(e.target.location);
+    let navigation = navigationHistory[url.toString()];
+    if(navigation) {
+        // We can restore the page to the state the user is requesting!
+    } else {
+        // We need to send a new request... :(
+        page(url);
+    }
+};
+
+window.addEventListener('popstate', onPopState);

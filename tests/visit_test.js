@@ -1,4 +1,5 @@
 import * as visit from '../src/visit';
+import * as navigation from '../src/navigation';
 import {stringToElements} from '../src/utils';
 
 describe('visit specs', () => {
@@ -12,50 +13,32 @@ describe('visit specs', () => {
         requests = [];
     });
 
-    describe('.findDocumentRoot', () => {
-        it('returns null by default', () => {
-            expect(visit.getDocumentRoot()).to.be.null;
-        });
-
-        it('is still null if no element can be found', () => {
-            visit.findDocumentRoot();
-            expect(visit.getDocumentRoot()).to.be.null;
-        });
-
-        it('returns the element with data-reflinks-root', () => {
-            let docRoot = stringToElements('<div data-reflinks-root></div>');
-            document.body.appendChild(docRoot[0]);
-            visit.initialize();
-            visit.getDocumentRoot().tagName.should.eql("DIV");
-            visit.getDocumentRoot().hasAttribute('data-reflinks-root').should.be.true;
-            // clean up
-            visit.getDocumentRoot().parentNode.removeChild(visit.getDocumentRoot());
-        });
-    });
-
+    /*
     describe('.cacheCurrent', () => {
         beforeEach(() => {
-            visit.clearNavigationHistory();
+            navigation.clearNavigationHistory();
             document.body.innerHTML = '<div data-reflinks-root></div>';
-            visit.initialize();
+            navigation.initializeHistory();
         });
 
         it('adds the data-cached property to the current root', () => {
-            visit.cacheCurrent();
-            visit.getDocumentRoot().hasAttribute('data-cached').should.be.true;
-            visit.getDocumentRoot().getAttribute('data-cached').length.should.be.at.least(5);
+            navigation.cacheCurrent();
+            navigation.getDocumentRoot().hasAttribute('data-cached').should.be.true;
+            navigation.getDocumentRoot().getAttribute('data-cached').length.should.be.at.least(5);
         });
     });
+    */
 
     describe('.page', () => {
+        // TODO: initializeHistory should find the documentRoot 
         beforeEach(() => {
-            visit.clearNavigationHistory();
+            navigation.clearNavigationHistory();
             document.body.innerHTML = '<div data-reflinks-root></div>';
-            visit.initialize();
+            navigation.initializeHistory();
         });
 
         it('has a document root by default', () => {
-            visit.getDocumentRoot().should.be.ok;
+            navigation.getDocumentRoot().should.be.ok;
         });
 
         it('sends a GET request to the specified url', () => {
@@ -68,7 +51,7 @@ describe('visit specs', () => {
         it('removes the previous document root with the response from the server', () => {
             visit.page('/reflinks', {cache: false});
             requests[0].respond(200, {}, '<body><div data-reflinks-root>New content!</div></body>');
-            visit.getDocumentRoot().innerHTML.should.eq('New content!');
+            navigation.getDocumentRoot().innerHTML.should.eq('New content!');
             let roots = document.querySelectorAll('*[data-reflinks-root]');
             roots.length.should.eq(1); // The previous one wasn't cached
         });
@@ -78,7 +61,7 @@ describe('visit specs', () => {
             requests[0].respond(200, {}, 
                 '<title>My title</title><body><div data-reflinks-root>Hello</div></body>'
             );
-            visit.getDocumentRoot().innerHTML.should.eq('Hello');
+            navigation.getDocumentRoot().innerHTML.should.eq('Hello');
             document.title.should.eq('My title');
         });
 
@@ -90,7 +73,7 @@ describe('visit specs', () => {
             );
             // This doesn't seem to work with in a long running browser with karma
             // watching for changes. Not sure why.
-            // window.history.length.should.eq(beforeLength + 1);
+            window.history.length.should.eq(beforeLength + 1);
         });
 
         /*
@@ -99,7 +82,7 @@ describe('visit specs', () => {
         ========================================================================
         The following two tests only works if run alone. I'll just leave them
         here. Maybe there is a way to test the requests without using timeout.
-        window.history.back() and window.history.forward() seems to trigger
+        window.navigation.back() and window.navigation.forward() seems to trigger
         popstate event later (how later?).
         ========================================================================
 
@@ -108,7 +91,7 @@ describe('visit specs', () => {
             requests[0].respond(200, {}, 
                 '<title>My title</title><body><div data-reflinks-root>Hello</div></body>'
             );
-            window.history.back();
+            window.navigation.back();
             setTimeout(() => {
                 requests.length.should.eq(2);
                 done();
@@ -120,10 +103,10 @@ describe('visit specs', () => {
             requests[0].respond(200, {},
                 '<title>My title</title><body><div data-reflinks-root>Hello</div></body>'
             );
-            window.history.back();
+            window.navigation.back();
             setTimeout(() => {
                 requests.length.should.eq(2);
-                window.history.forward();
+                window.navigation.forward();
                 setTimeout(() => {
                     requests.length.should.eq(3);
                     done();
@@ -137,9 +120,9 @@ describe('visit specs', () => {
             requests[0].respond(200, {},
                 '<title>My title</title><body><div data-reflinks-root>Hello</div></body>'
             );
-            let history = visit.getNavigationHistory();
-            history['http://localhost:9876/cached-reflinks'].should.be.ok;
-            history['http://localhost:9876/cached-reflinks'].length.should.eq(1);
+            let pages = navigation.getHistory();
+            pages['http://localhost:9876/cached-reflinks'].should.be.ok;
+            pages['http://localhost:9876/cached-reflinks'].length.should.eq(1);
         });
     });
 });
