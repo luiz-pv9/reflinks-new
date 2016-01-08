@@ -23,6 +23,21 @@ let navigationHistory = {};
 export function getHistory() { return navigationHistory; }
 
 /*
+** Iterates through the given `elm` child nodes finding elements with
+** 'data-view' attribute. Returns an array with elements in the order they're
+** found (higher level first than deep ones).
+*/
+export function findNestedViews(elm) {
+    let nestedViews = [];
+    let nestedView = elm.querySelector('*[data-view]');
+    while(nestedView) {
+        nestedViews.push(nestedView);
+        nestedView = nestedView.querySelector('*[data-view]');
+    }
+    return nestedViews;
+}
+
+/*
 ** 
 */
 export function cacheCurrent() {
