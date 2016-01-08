@@ -33,11 +33,6 @@ export function cacheCurrent() {
 }
 
 /*
-** Reference to the element that is currently being displayed as root.
-*/
-let documentRoot = null;
-
-/*
 ** Returns the documentRoot of the current page.
 */
 export function getDocumentRoot() {
@@ -60,8 +55,10 @@ export function getDocumentRoot() {
 
 /*
 ** Clear the conents of navigationHistory to an empty object.
+** Each element associated with an history entry is removed from
+** the page.
 */
-export function clearNavigationHistory() {
+export function clearHistory() {
     Object.keys(navigationHistory).forEach((url) => {
         delete navigationHistory[url];
     });
@@ -108,15 +105,36 @@ function cacheElement(url, element) {
 }
 
 /*
+** Default argument for the `initializeHistory` function. The properties
+** are merged with the ones the user specifies.
+*/
+const defaultInitializeHistoryOptions = {
+	cache: false
+};
+
+/*
 ** Adds the property data-active to the first document-root specified by the
 ** user when the page loads. This function should only be called once.
 */
-export function initializeHistory() {
-    let docRoot = getDocumentRoot();
+export function initializeHistory(options) {
+	options = utils.mergeObjects(options, defaultInitializeHistoryOptions);
+    let docRoot = document.querySelectorAll('*['+ROOT_ATTR+']');
+
+	if(docRoot.length > 1) {
+		throw "[reflinks] Multiple elements with data-reflinks-root found in the page.";
+	}
+
+	docRoot = docRoot[0]; // Grab the one and only document root.
+
     if(docRoot && !docRoot.hasAttribute(ACTIVE_ATTR)) {
         docRoot.setAttribute(ACTIVE_ATTR, '');
     }
-    if(docRoot && docRoot.hasAttribute('data-cached')) {
+
+	if(options.cache) {
+		docRoot.setAttribute(CACHED_ATTR, new Date().getTime());
+	}
+
+    if(docRoot && docRoot.hasAttribute(CACHED_ATTR)) {
         let url = new Url(document.location).withoutHash();
         cacheElement(url.toString(), docRoot);
     }

@@ -1,5 +1,13 @@
 import * as navigation from '../src/navigation';
-import {stringToElements} from '../src/utils';
+import Url from '../src/url';
+import {removeElement, stringToElements} from '../src/utils';
+
+/*
+** Returns the current URL.
+*/
+function currentUrl() {
+	return new Url(document.location).withoutHash().toString();
+}
 
 describe.only('navigation specs', () => {
     it('is an object', () => {
@@ -16,19 +24,17 @@ describe.only('navigation specs', () => {
         });
 
         it('returns undefined if data-reflinks-root is present but no data-active', () => {
-            let div = stringToElements('<div data-reflinks-root></div>');
-            div = div[0];
+            let div = stringToElements('<div data-reflinks-root></div>')[0];
             document.body.appendChild(div);
             expect(navigation.getDocumentRoot()).to.be.null;
-            document.body.removeChild(div);
+			removeElement(div);
         });
 
         it('returns the element with both data-reflinks-root and data-active', () => {
-            let elm = stringToElements('<div data-reflinks-root data-active></div>');
-            elm = elm[0];
+            let elm = stringToElements('<div data-reflinks-root data-active></div>')[0];
             document.body.appendChild(elm);
             navigation.getDocumentRoot().should.eq(elm);
-            document.body.removeChild(elm);
+			removeElement(elm);
         });
 
         it('returns nested data-view if active', () => {
@@ -36,11 +42,10 @@ describe.only('navigation specs', () => {
                 '<div data-reflinks-root data-active>' + 
                     '<div data-view="post" data-active></div>' +
                 '</div>'
-            );
-            elm = elm[0];
+            )[0];
             document.body.appendChild(elm);
             navigation.getDocumentRoot().getAttribute('data-view').should.eq('post');
-            document.body.removeChild(elm);
+			removeElement(elm);
         });
 
         it('returns deep nested (two or more) data-view if active', () => {
@@ -50,15 +55,31 @@ describe.only('navigation specs', () => {
                         '<div data-view="comment" data-active></div>' +
                     '</div>' +
                 '</div>'
-            );
-            elm = elm[0];
+            )[0];
             document.body.appendChild(elm);
             navigation.getDocumentRoot().getAttribute('data-view').should.eq('comment');
-            document.body.removeChild(elm);
+			removeElement(elm);
         });
+
+		it('returns the element with data-active', () => {
+			let elm = stringToElements(
+				'<div data-reflinks-root data-active>' +
+					'<div data-view="post" id="first"></div>' +
+					'<div data-view="post" id="second" data-active></div>' +
+				'</div>'
+			)[0];
+
+			document.body.appendChild(elm);
+			navigation.getDocumentRoot().id.should.eq('second');
+			removeElement(elm);
+		});
     });
 
     describe('.initializeHistory', function() {
+		beforeEach(() => {
+			navigation.clearHistory();
+		});
+
         it('is a function', () => {
             navigation.initializeHistory.should.be.a.Function;
         });
@@ -69,12 +90,46 @@ describe.only('navigation specs', () => {
         });
 
         it('adds data-active to the document root if present', () => {
-            // document.body.innerHTML = '<div data-reflinks-root></div>';
-            // navigation.initializeHistory();
-            // navigation.getDocumentRoot();
+			let elm = stringToElements(
+				'<div data-reflinks-root></div>'
+			)[0];
+			document.body.appendChild(elm);
+			navigation.initializeHistory();
+			navigation.getDocumentRoot().should.be.ok;
+			elm.hasAttribute('data-active').should.be.true;
+			removeElement(elm);
         });
 
-        it('adds the current url to the history if the document root is cached');
+        it('adds the current url to the history if the document root is cached', () => {
+			let elm = stringToElements(
+				'<div data-reflinks-root data-cached></div>'
+			)[0];
+			document.body.appendChild(elm);
+			navigation.initializeHistory();
+			let history = navigation.getHistory();
+			let curl = currentUrl();
+			Object.keys(history).should.have.length(1);
+			history.should.have.property(curl);
+			history[curl].should.eql([elm]);
+			removeElement(elm);
+		});
+
+		it('caches the root if cache: true is specified', () => {
+			let elm = stringToElements(
+				'<div data-reflinks-root></div>'
+			)[0];
+			document.body.appendChild(elm);
+			navigation.initializeHistory({
+				cache: true // This option will cache the document-root
+			});
+			let history = navigation.getHistory();
+			let curl = currentUrl();
+			history[curl].should.eql([elm]);
+			removeElement(elm);
+		});
+
+		it('caches nested views if cache:true is specified');
+
         it('adds data-active to nested data-view');
         it('adds data-active to data-view inside data-view (nested two or more)');
     });

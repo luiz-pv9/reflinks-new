@@ -82,6 +82,13 @@ export function hideElement(elm) {
 }
 
 /*
+** Removes the given `elm` from the parent if elm is valid and has a parentNode.
+*/
+export function removeElement(elm) {
+	if(elm && elm.parentNode) elm.parentNode.removeChild(elm);
+}
+
+/*
 ** Receives html snippet the server responded 
 */
 export function extractAndUpdateTitle(html) {

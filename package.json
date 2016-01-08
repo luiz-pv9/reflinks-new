@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "readme": "Readme.md",
   "scripts": {
-    "test": "mocha --compilers js:babel-core/register --recursive tests",
+    "test": "karma start",
     "build": "browserify src/reflinks.js > build/reflinks.js -t [ babelify uglifyify ]"
   },
   "dependencies": {},

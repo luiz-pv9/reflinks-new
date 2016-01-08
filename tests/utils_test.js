@@ -194,4 +194,24 @@ describe('utils specs', () => {
             utils.isString(1).should.be.false;
         });
     });
+
+	describe('.removeElement', () => {
+		it('ignores if the element is not valid', () => {
+			utils.removeElement(null);
+			utils.removeElement({});
+		});
+
+		it('removes the element from the parent', () => {
+			let div = utils.stringToElements(
+				'<div><p></p></div>'
+			)[0];
+			let paragraph = div.querySelector('p');
+			utils.removeElement(paragraph);
+			expect(paragraph.parentNode).to.be.null;
+			div.childNodes.should.have.length(0);
+
+			// Calling again does nothing
+			utils.removeElement(paragraph);
+		});
+	});
 });
