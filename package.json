@@ -5,7 +5,7 @@
   "readme": "Readme.md",
   "scripts": {
     "test": "karma start",
-    "build": "browserify src/reflinks.js > build/reflinks.js -t [ babelify uglifyify ]"
+    "build": "browserify src/reflinks.js > build/reflinks.js -t [ babelify ]"
   },
   "dependencies": {},
   "devDependencies": {

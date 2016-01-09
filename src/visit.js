@@ -10,7 +10,7 @@ const defaultOnSuccessOptions = {
 
     // This flags indicates if the response from the server should be cached or
     // not.
-    cache: true
+    cache: true,
 };
 
 /*
@@ -43,9 +43,9 @@ function onSuccess(root, attribute, value, options) {
             let node = nodes[i];
             if(node.hasAttribute(navigation.CACHED_ATTR)) {
                 node.removeAttribute(navigation.ACTIVE_ATTR);
-                hideElement(node);
+                utils.hideElement(node);
             } else {
-                root.removeChild(node);
+                utils.removeElement(node);
             }
         }
 

@@ -28,6 +28,7 @@ export function getHistory() { return navigationHistory; }
 ** found (higher level first than deep ones).
 */
 export function findNestedViews(elm) {
+	if(!elm || !elm.querySelector) return [];
     let nestedViews = [];
     let nestedView = elm.querySelector('*[data-view]');
     while(nestedView) {
@@ -35,6 +36,32 @@ export function findNestedViews(elm) {
         nestedView = nestedView.querySelector('*[data-view]');
     }
     return nestedViews;
+}
+
+/*
+** Iterates through the given `elm` parents until document root is reached.
+** The document root is included in the returned array. If `strict` is set
+** to true, this function raises an error if no document root is found.
+*/
+export function findParentViews(elm, strict) {
+	let views = [];
+	let view = elm.parentNode;
+	let docRootFound = false;
+	while(view) {
+		if(view.hasAttribute(VIEW_ATTR)) {
+			views.push(view);
+		}
+		if(view.hasAttribute(ROOT_ATTR)) {
+			views.push(view);
+			docRootFound = true;
+			break;
+		}
+		view = view.parentNode;
+	}
+	if(strict && !docRootFound) {
+		throw "[reflinks] No document root found for target: " + elm.toString();
+	}
+	return views.reverse();
 }
 
 /*
@@ -101,21 +128,36 @@ export function pushState(url, element, options) {
 }
 
 /*
+** Caches the given `element` and associated views (nested or parent) adding
+** 'data-cached' and setting an entry in the `history` map.
 **
+** This function is called by `pushState`.
 */
 function cacheElement(url, element) {
-    let docRoot = getDocumentRoot();
     let elements = [];
-    if(docRoot === element) {
+    if(element.hasAttribute(ROOT_ATTR)) {
+		// If the given element is a top-level root, we need to dig down
+		// and search for nested views.
         elements.push(element);
-        // TODO: crawl the element for possible data-views.
+		findNestedViews(element).forEach(view => {
+			elements.push(view);
+		});
     } else {
-        // If it's a target it means the previous document root is still the
-        // same.
-        elements.push(docRoot);
-
-        // I need to check the current document for hints... what hints?
+		// If the given element is a target, we need to dig up and down
+		// and search until we reach document-root and the deepest view.
+		findParentViews(element).forEach(view => {
+			elements.push(view);
+		});
+		elements.push(element);
+		findNestedViews(element).forEach(view => {
+			elements.push(view);
+		});
     }
+
+	// Set data-cached attribute in each element in the view tree.
+	elements.forEach(elm => {
+		elm.setAttribute(CACHED_ATTR, new Date().getTime());
+	});
     navigationHistory[url] = elements;
 }
 
@@ -145,9 +187,20 @@ export function initializeHistory(options) {
         docRoot.setAttribute(ACTIVE_ATTR, '');
     }
 
+
 	if(options.cache) {
 		docRoot.setAttribute(CACHED_ATTR, new Date().getTime());
 	}
+
+	// The current document-root might have nested views. We need to
+	// set those as 'active' as well, and cache them if specified.
+	let nestedViews = findNestedViews(docRoot);
+	nestedViews.forEach((view) => {
+		view.setAttribute(ACTIVE_ATTR, '');
+		if(options.cache) {
+			view.setAttribute(CACHED_ATTR, new Date().getTime());
+		}
+	});
 
     if(docRoot && docRoot.hasAttribute(CACHED_ATTR)) {
         let url = new Url(document.location).withoutHash();
