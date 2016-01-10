@@ -18,6 +18,7 @@ function currentUrl() {
 **  - Removes the element from the body.
 */
 function navigationHelper(opts) {
+    navigation.clearHistory();
     let elm = stringToElements(opts.elm)[0];
     document.body.appendChild(elm);
     navigation.initializeHistory(opts.historyOptions);
@@ -200,7 +201,6 @@ describe('navigation specs', () => {
                 elm: '<div data-reflinks-root data-cached></div>',
                 historyOptions: {},
                 ready: (elm) => {
-                    navigation.initializeHistory();
                     let history = navigation.getHistory();
                     let curl = currentUrl();
                     Object.keys(history).should.have.length(1);

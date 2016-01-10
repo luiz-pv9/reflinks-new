@@ -10,6 +10,19 @@ export const ROOT_ATTR   = 'data-reflinks-root';
 export const VIEW_ATTR   = 'data-view';
 
 /*
+** Number of states reflinks will cache. If the user requests to cache
+** a view and the limit is reached, the oldest entry is deleted to make
+** room for the new one.
+*/
+let cacheLimit = 20;
+
+/*
+** Public API to read and write cacheLimit.
+*/
+export function setCacheLimit(n) { cacheLimit = n; }
+export function getCacheLimit()  { return cacheLimit; }
+
+/*
 ** Stores all history changes objects to rollback or advance through navigation.
 ** This hash maps from a url to a list of elements that represents the url view.
 ** This map is used in the onPopState function to find whether we need to send
@@ -107,6 +120,18 @@ export function clearHistory() {
 }
 
 /*
+** Removes the given `url` from the navigation entry and all elements
+** associated with it. This function verifies if the element is shared
+** across other entries, and only removes them if they are unique to
+** the given `url`.
+*/
+
+/*
+export function clearCache(url) {
+}
+*/
+
+/*
 ** Pushes a new state to the history and updates the navigation map with the
 ** specified element (root and possible targets).
 */
@@ -123,6 +148,25 @@ export function pushState(url, element, options) {
     // until we find the specified element counting each data-view we found.
 
     if(options.cache) {
+        /*
+        let entries = Object.keys(navigationHistory);
+        let currentCacheSize = entries.length;
+        if(currentCacheSize >= cacheLimit) {
+            // Erase the oldest entry...
+            let oldest = Number.POSITIVE_INFINITY;
+            let oldestEntry = null;
+            entries.forEach(entry => {
+                let elements = navigationHistory[entry];
+                if(elements.cachedAt < oldest) {
+                    oldest = elements.cachedAt;
+                    oldestEntry = entry;
+                }
+            });
+            if(oldestEntry) {
+                clearCache(oldestEntry);
+            }
+        }
+        */
         cacheElement(url, element);
     }
 }
@@ -155,9 +199,31 @@ function cacheElement(url, element) {
     }
 
 	// Set data-cached attribute in each element in the view tree.
+    let currentTime = new Date().getTime();
 	elements.forEach(elm => {
-		elm.setAttribute(CACHED_ATTR, new Date().getTime());
+		elm.setAttribute(CACHED_ATTR, currentTime);
 	});
+
+    // Adding 'cachedAt' to the array causes existing tests to fail.
+    // The following code illustrates why they fail:
+    //
+    // ```
+    // var a = [10];
+    // var b = [10];
+    // a.something = true;
+    // a.should.eql(b); // false because of the "something" property.
+    // ```
+    // In order to make tests pass, we define "cachedAt" as non
+    // enumerable so that chai isn't aware of it.
+    Object.defineProperty(elements, "cachedAt", {
+        enumerable: false,
+        writable: true,
+    });
+
+    // Set the currentTime in the elements array. This attribute is
+    // used when finding the oldest entry in the navigation history.
+    elements.cachedAt = currentTime;
+
     navigationHistory[url] = elements;
 }
 

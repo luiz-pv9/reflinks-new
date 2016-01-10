@@ -151,4 +151,60 @@ describe('visit specs', () => {
             current.hasAttribute('data-cached').should.be.true;
         });
     });
+
+    describe('.page - cache limit', () => {
+        let root;
+        beforeEach(() => {
+            navigation.clearHistory();
+            window.history.pushState(null, null, '/reset');
+            root = stringToElements(
+                '<div>' +
+                    '<div id="first" data-reflinks-root></div>' +
+                '</div>'
+            )[0];
+            document.body.appendChild(root);
+            navigation.initializeHistory({cache: true});
+            visit.page('/first', { cache: true });
+            requests[0].respond(200, {},
+                '<body><div id="second" data-reflinks-root></div></body>');
+            Object.keys(navigation.getHistory()).should.have.length(2);
+        });
+
+        afterEach(() => {
+            removeElement(root);
+        });
+
+        it('removes the oldest entry from the history', () => {
+            let history = navigation.getHistory();
+
+            // We should start with 2 entries in the history.
+            Object.keys(history).should.have.length(2);
+
+            // Set cache limit to 2 pages
+            navigation.setCacheLimit(2);
+
+            // Visit a new page and respond with a new document root
+            visit.page('/third', { cache: true });
+            requests[1].respond(200, {},
+                '<body><div id="third" data-reflinks-root></div></body>');
+
+            // Assert that:
+            // * The history has only two elements.
+            Object.keys(history).should.have.length(2);
+
+            // * There is an entry for /first
+            // * There is an entry for /second
+        });
+
+        it('removes the element associated with the oldest entry');
+    });
+
+    describe('target - without cache', () => {
+    });
+
+    describe('target - cached views', () => {
+    });
+
+    describe('target - cache limit', () => {
+    });
 });
