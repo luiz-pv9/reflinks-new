@@ -93,18 +93,23 @@ export function page(url, options) {
 ** Similar to visiting a page but the received content from the server is
 ** inserted in the specified element.
 */
-export function target(url, elm, viewName) {
+export function target(url, elm, viewName, options) {
     let id;
     if(!utils.isElement(elm)) {
         id = elm;
         elm = document.getElementById(elm);
     }
     if(!elm) {
-        return console.error("[reflinks] - target not found: " + id);
+        throw "[reflinks] - target not found: " + id;
+    }
+    let customHeaders = {};
+    if(viewName) {
+        customHeaders['X-TARGET'] = viewName;
     }
     Request.GET(url, {
         redirect: onRedirect,
-        success:  onSuccess(navigation.getDocumentRoot().parentNode, 'data-view', viewName),
+        success:  onSuccess(elm, 'data-view', viewName, options),
+        headers:  customHeaders,
         error:    onError,
     });
 }

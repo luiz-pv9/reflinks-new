@@ -223,9 +223,140 @@ describe('visit specs', () => {
     });
 
     describe('target - without cache', () => {
+        let root, post, url;
+
+        beforeEach(() => {
+            navigation.clearHistory();
+            window.history.pushState(null, null, '/reset');
+            root = stringToElements(
+                '<div data-reflinks-root>' +
+                    '<div data-view="post">' +
+                        '<div id="first" data-view="comment"></div>' +
+                    '</div>' +
+                '</div>'
+            )[0];
+            document.body.appendChild(root);
+            navigation.initializeHistory();
+            post = root.querySelector('[data-view="post"]');
+            url = new Url('/other-comment').toString();
+            visit.target(url, post, "comment", { cache: true });
+            requests[0].respond(200, {},
+                '<body><div id="second" data-view="comment"></div></body>');
+        });
+
+        afterEach(() => {
+            removeElement(root);
+        });
+
+        it('adds X-TARGET in the request header', () => {
+            requests[0].should.be.ok;
+            requests[0].requestHeaders.should.have.property('X-TARGET');
+            requests[0].requestHeaders['X-TARGET'].should.eql('comment');
+        });
+
+        it('keeps data-active to the parent document root', () => {
+            root.hasAttribute('data-active').should.be.true;
+        });
+
+        it('keeps data-active to the parent view', () => {
+            post.hasAttribute('data-active').should.be.true;
+        });
+
+        it('adds the view from the request in the given element', () => {
+            let second = post.querySelector('[id="second"]');
+            second.getAttribute('data-view').should.eql("comment");
+        });
+
+        it('adds data-active to the new view', () => {
+            let second = post.querySelector('[id="second"]');
+            second.hasAttribute('data-active').should.be.true;
+        });
+
+        it('removes the sibling view', () => {
+            let first = post.querySelector('[id="first"]');
+            expect(first).to.be.null;
+        });
+
+        it('adds data-cached to the view', () => {
+            let second = post.querySelector('[id="second"]');
+            second.hasAttribute('data-cached').should.be.true;
+        });
+
+        it('adds an entry to the history', () => {
+            let second = post.querySelector('[id="second"]');
+            let history = navigation.getHistory();
+            history.should.have.property(url);
+            history[url].should.eql([root, post, second]);
+        });
     });
 
     describe('target - cached views', () => {
+        let root, post, url;
+
+        beforeEach(() => {
+            navigation.clearHistory();
+            window.history.pushState(null, null, '/reset');
+            root = stringToElements(
+                '<div data-reflinks-root>' +
+                    '<div data-view="post">' +
+                        '<div id="first" data-view="comment"></div>' +
+                    '</div>' +
+                '</div>'
+            )[0];
+            document.body.appendChild(root);
+            navigation.initializeHistory({ cache: true });
+            post = root.querySelector('[data-view="post"]');
+            url = new Url('/second').toString();
+            visit.target(url, post, "comment", { cache: true });
+            requests[0].respond(200, {},
+                '<body><div id="second" data-view="comment"></div></body>');
+        });
+
+        afterEach(() => {
+            removeElement(root);
+        });
+
+        it('keeps the parents data-active attribute', () => {
+            root.hasAttribute('data-active').should.be.true;
+            post.hasAttribute('data-active').should.be.true;
+        });
+
+        it('hides the sibling view and removes data-active', () => {
+            let first = post.querySelector('[id="first"]');
+            first.style.display.should.eql('none');
+            first.hasAttribute('data-active').should.be.false;
+        });
+
+        it('adds data-active to the new target', () => {
+            let second = post.querySelector('[id="second"]');
+            second.hasAttribute('data-active').should.be.true;
+        });
+
+        it('adds the new entry to history', () => {
+            let second = post.querySelector('[id="second"]');
+            let history = navigation.getHistory();
+            history[url].should.eql([root, post, second]);
+        });
+
+        it('keeps the old view in the history', () => {
+        });
+    });
+
+    describe('target - without target element', () => {
+        it('doesnt add X-TARGET header');
+        it('tries to match document-root by id');
+        it('throws an error if the response doesnt have an id');
+        it('inserts the view inside the existing matching document-root by id');
+    });
+
+    describe('target - without target element nested view', () => {
+        it('inserts to match parent view by id');
+        it('throws an error if couldnt find parent view');
+    });
+
+    describe('target - response without view', () => {
+        it('adds data-view to the top most element');
+        it('inserts the elements inside a div if the body contain multiple elements');
     });
 
     describe('target - cache limit', () => {
