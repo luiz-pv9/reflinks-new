@@ -125,11 +125,16 @@ export function clearHistory() {
 ** across other entries, and only removes them if they are unique to
 ** the given `url`.
 */
-
-/*
 export function clearCache(url) {
+    if(navigationHistory[url]) {
+        let elements = navigationHistory[url];
+        delete navigationHistory[url];
+        // TODO: Remove elements only if they're unique to the url
+        elements.forEach(elm => {
+            utils.removeElement(elm);
+        });
+    }
 }
-*/
 
 /*
 ** Pushes a new state to the history and updates the navigation map with the
@@ -148,7 +153,6 @@ export function pushState(url, element, options) {
     // until we find the specified element counting each data-view we found.
 
     if(options.cache) {
-        /*
         let entries = Object.keys(navigationHistory);
         let currentCacheSize = entries.length;
         if(currentCacheSize >= cacheLimit) {
@@ -166,7 +170,6 @@ export function pushState(url, element, options) {
                 clearCache(oldestEntry);
             }
         }
-        */
         cacheElement(url, element);
     }
 }

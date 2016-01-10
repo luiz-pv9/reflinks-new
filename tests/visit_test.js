@@ -164,7 +164,7 @@ describe('visit specs', () => {
             )[0];
             document.body.appendChild(root);
             navigation.initializeHistory({cache: true});
-            visit.page('/first', { cache: true });
+            visit.page('/second', { cache: true });
             requests[0].respond(200, {},
                 '<body><div id="second" data-reflinks-root></div></body>');
             Object.keys(navigation.getHistory()).should.have.length(2);
@@ -192,11 +192,34 @@ describe('visit specs', () => {
             // * The history has only two elements.
             Object.keys(history).should.have.length(2);
 
-            // * There is an entry for /first
             // * There is an entry for /second
+            let secondUrl = new Url('/second').toString();
+            history.should.have.property(secondUrl);
+
+            // * There is an entry for /third
+            let thirdUrl = new Url('/third').toString();
+            history.should.have.property(thirdUrl);
         });
 
-        it('removes the element associated with the oldest entry');
+        it('removes the element associated with the oldest entry', () => {
+            // Set cache limit to 2 pages
+            navigation.setCacheLimit(2);
+
+            // Visit a new page and respond with a new document root.
+            visit.page('/third', { cache: true });
+            requests[1].respond(200, {},
+                '<body><div id="third" data-reflinks-root></div></body>');
+
+            // There should only be two document roots in the document
+            let docRoots = document.querySelectorAll('[data-reflinks-root]');
+            docRoots.should.have.length(2);
+
+            // One of them has id="second"
+            docRoots[0].id.should.eql('second');
+
+            // The other one has id="third"
+            docRoots[1].id.should.eql('third');
+        });
     });
 
     describe('target - without cache', () => {
