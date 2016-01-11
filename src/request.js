@@ -17,7 +17,6 @@ const EVENT_ERROR        = 'error';
 */
 let customRedirectStatus = 280;
 
-
 /*
 ** Amount of time (in milliseconds) a request may take before it's considered 
 ** as timeout.
@@ -79,7 +78,7 @@ export class Request extends EventEmitter {
         xhr.setRequestHeader('X-REFLINKS', 'true');
 
         // user defined custom headers
-        Object.keys(options.headers).forEach(function(key) {
+        Object.keys(options.headers).forEach(key => {
             xhr.setRequestHeader(key, options.headers[key]);
         });
 
